@@ -1,0 +1,16 @@
+data*/
+R/docker_linseed_pipeline/
+*.Rproj
+linseed2_results/
+TROUBLESHOOTING.MD
+*.csv
+*.tsv
+*.rds
+.DS_Store
+.RData
+.Rhistory
+.Rproj.user
+.lintr
+.ipynb_checkpoints/
+.vscode/
+*.pdf
