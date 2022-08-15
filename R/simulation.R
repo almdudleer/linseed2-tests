@@ -1,7 +1,4 @@
-source("R/de.R")
-source("R/metrics.R")
-
-# Logic
+# Simulation logic
 generateBasis <- function(n_genes, n_cell_types, sd_ = 0.2) {
     data_1 <- c(
         rnorm(n_genes * 2, mean = 4, sd = 0.75),
@@ -13,8 +10,6 @@ generateBasis <- function(n_genes, n_cell_types, sd_ = 0.2) {
     for (i in 1:n_genes) {
         basis[i, 1] <- data_1[sample(seq_len(length(data_1)), 1)] * rnorm(1, mean = 1, sd = sds_[1])
         for (j in 2:n_cell_types) {
-            # DISCUSS: the only difference between the cell types is their deviation from the first type
-            # which is seen on differential expression
             basis[i, j] <- basis[i, 1] * rnorm(1, mean = 1, sd = sds_[j])
         }
     }
@@ -36,7 +31,6 @@ generateProportions <- function(n_samples, n_cell_types) {
 }
 
 addNoiseToData <- function(data, noise_deviation) {
-    # DISCUSS: additive or multiplicative noise
     noise_mask <- matrix(rnorm(length(data), sd = noise_deviation), nrow = nrow(data), ncol = ncol(data))
     noisy_data <- data + 2^noise_mask
     noisy_data[noisy_data < 0] <- 0

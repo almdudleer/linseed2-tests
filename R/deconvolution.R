@@ -7,11 +7,17 @@ library(ggpubr)
 library(data.table)
 library(dplyr)
 
-source("R/docker_linseed_pipeline/LinseedMetadata.R")
-source("R/docker_linseed_pipeline/SinkhornNNLSLinseedC.R")
-Rcpp::sourceCpp("R/docker_linseed_pipeline/pipeline.cpp")
-
 bwr <- colorRampPalette(c("blue", "white", "red"))(50)
+
+addDeMarkerList <- function(simulation) {
+    stopifnot(!is.null(simulation$pure_sample_names))
+    pure_es <- ExpressionSet(
+        assayData = simulation$data[, simulation$pure_sample_names],
+        phenoData = AnnotatedDataFrame(as.data.frame(t(simulation$proportions[, simulation$pure_sample_names])))
+    )
+    simulation$marker_list <- getDeMarkerList(pure_es)
+    simulation
+}
 
 barplotMetric <- function(predicts, truth, metric.f, name, colors) {
     metrics <- predicts %>%
@@ -102,33 +108,12 @@ fitDeconvolutionModel <- function(edata, kind, ntypes, markers = NULL, verbose =
         lo$deconvolveByEndpoints(dataset = "full", error = "raw")
         lo
     } else if (kind == "linseed2") {
-        top_genes = 493
-        global_iterations = 2000
-        coef_hinge_H <- 10
-        coef_hinge_W <- 10
-        coef_pos_D_h <- 0.01
-        coef_pos_D_w <- 0.01
-        coef_der_X <- 0.00001
-        coef_der_Omega <- 0.0000001
-
-        lo2 <- SinkhornNNLSLinseed$new(
-            dataset = edata,
-            path = "linseed2_results",
-            analysis_name = "deconv_comparison_2",
-            cell_types = ntypes,
-            global_iterations = global_iterations,
-            coef_der_X = coef_der_X,
-            coef_der_Omega = coef_der_Omega,
-            coef_pos_D_h = coef_pos_D_h,
-            coef_pos_D_w = coef_pos_D_w,
-            coef_hinge_H = coef_hinge_H,
-            coef_hinge_W = coef_hinge_W
-        )
-        lo2$selectTopGenes(min(top_genes, nrow(lo2$filtered_data)))
-        lo2$scaleDataset(iterations = 20)
-        lo2$getSvdProjectionsNew(k = ntypes)
-        lo2$selectInitOmega()
-        lo2$runOptimization()
+        lo2 <- init_lo2(edata, min(nrow(edata), 10000))
+        samples_flt <- do_mad_cutoff(lo2, samples = T)
+        genes_flt <- do_mad_cutoff(lo2, samples = F)
+        edata_flt <- edata[rownames(edata) %in% genes_flt, colnames(edata) %in% samples_flt]
+        lo2 <- init_lo2(edata_flt, min(nrow(edata_flt), 10000))
+        run_block(lo2, iterations = 10000)
         lo2
     }
 }

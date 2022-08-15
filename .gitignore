@@ -1,5 +1,5 @@
 data*/
-R/docker_linseed_pipeline/
+.idea/
 *.Rproj
 linseed2_results/
 TROUBLESHOOTING.MD
@@ -9,7 +9,7 @@ TROUBLESHOOTING.MD
 .DS_Store
 .RData
 .Rhistory
-.Rproj.user
+.Rproj.user/
 .lintr
 .ipynb_checkpoints/
 .vscode/
